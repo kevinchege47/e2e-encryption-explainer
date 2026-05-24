@@ -117,8 +117,12 @@ private keys never leave devices — is identical in both approaches.
 
 ## Running locally
 
-**Requirements:** Python 3.11+, a modern browser (Web Crypto API)
-
+**Requirements:**
+fastapi
+uvicorn[standard]
+aiosqlite
+cryptography
+pydantic
 ```bash
 # Clone and install
 git clone https://github.com/yourname/e2ecrypto-demo
