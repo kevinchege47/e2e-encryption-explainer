@@ -5,1186 +5,643 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>E2E Encryption Demo</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+:root{--bg:#090e16;--s1:#0f1720;--s2:#14202e;--s3:#1a2a3a;--border:#1e3048;--accent:#00c8f0;--green:#00d96e;--red:#ff3366;--amber:#f5a800;--text:#c8daf0;--dim:#3a5570;--bright:#e8f4ff;--mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,240,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,240,.018) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:28px 20px 60px}
 
-  :root {
-    --bg: #080b10;
-    --surface: #0d1117;
-    --surface2: #131920;
-    --border: #1e2d3d;
-    --accent: #00d4ff;
-    --green: #00e87a;
-    --red: #ff3366;
-    --yellow: #ffcc00;
-    --text: #c9d8e8;
-    --text-dim: #4a6070;
-    --text-bright: #e8f4ff;
-  }
+.hdr{text-align:center;margin-bottom:36px}
+.hdr h1{font-family:var(--sans);font-size:24px;font-weight:700;color:var(--bright);letter-spacing:-.4px}
+.hdr h1 em{color:var(--accent);font-style:normal}
+.hdr p{font-size:13px;color:var(--dim);margin-top:6px;letter-spacing:.06em}
 
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { transition: none !important; animation: none !important; }
-  }
+/* step nav */
+.snav{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:28px;overflow-x:auto;padding-bottom:2px}
+.sitem{display:flex;align-items:center;flex-shrink:0}
+.sdot{display:flex;flex-direction:column;align-items:center;gap:5px;padding:0 6px;cursor:default}
+.snum{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--dim);background:var(--s1);transition:all .2s}
+.slbl{font-size:10px;color:var(--dim);text-align:center;white-space:nowrap;max-width:72px;line-height:1.25;transition:color .2s}
+.sline{width:28px;height:1.5px;background:var(--border);margin-bottom:20px;flex-shrink:0;transition:background .3s}
+.sitem.done .snum{background:rgba(0,217,110,.08);border-color:var(--green);color:var(--green)}
+.sitem.active .snum{background:rgba(0,200,240,.1);border-color:var(--accent);color:var(--accent)}
+.sitem.done .slbl{color:var(--green)}
+.sitem.active .slbl{color:var(--accent)}
+.sline.done{background:var(--green)}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+/* main two-col layout */
+.layout{display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start}
+@media(max-width:780px){.layout{grid-template-columns:1fr}}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+/* panels */
+.panel{background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:18px}
+.phdr{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border)}
+.pbadge{background:rgba(0,200,240,.08);border:1px solid rgba(0,200,240,.2);color:var(--accent);font-size:10px;padding:3px 9px;border-radius:5px;font-weight:700;letter-spacing:.06em;font-family:var(--mono)}
+.phdr h2{font-size:15px;font-weight:600;color:var(--bright)}
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
+/* composer */
+.composer{padding:18px 20px 16px}
+.comp-desc{font-size:13px;color:var(--dim);margin-bottom:14px;line-height:1.6}
+.comp-field{margin-bottom:12px}
+.comp-label{font-size:11px;color:var(--dim);letter-spacing:.06em;margin-bottom:5px;font-family:var(--mono);text-transform:uppercase}
+.comp-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--bright);font-family:var(--sans);font-size:14px;padding:9px 13px;border-radius:8px;outline:none;transition:border-color .15s}
+.comp-input:focus{border-color:var(--accent)}
+.comp-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.comp-select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--bright);font-family:var(--sans);font-size:13px;padding:9px 13px;border-radius:8px;outline:none;cursor:pointer;transition:border-color .15s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%233a5570' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+.comp-select:disabled{opacity:.4;cursor:not-allowed}
+.comp-select:focus{border-color:var(--accent)}
+.btn-send{width:100%;background:rgba(0,200,240,.1);border:1px solid rgba(0,200,240,.25);color:var(--accent);font-family:var(--sans);font-size:13px;font-weight:600;padding:10px;border-radius:8px;cursor:pointer;transition:all .15s;letter-spacing:.02em}
+.btn-send:hover:not(:disabled){background:rgba(0,200,240,.18);border-color:rgba(0,200,240,.45)}
+.btn-send:disabled{opacity:.35;cursor:not-allowed}
 
-  .app {
-    position: relative;
-    z-index: 1;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 24px 20px;
-  }
+/* journey */
+.journey{padding:0 20px 20px}
+.journey-track{display:flex;flex-direction:column;gap:0}
+.jnode{display:flex;align-items:flex-start;gap:12px;padding:12px 0;position:relative}
+.jnode:not(:last-child)::after{content:'';position:absolute;left:17px;top:44px;width:1.5px;height:calc(100% - 20px);background:var(--border)}
+.jicon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:1px solid var(--border);background:var(--s2);position:relative;z-index:1;transition:border-color .3s,background .3s}
+.jicon.active{border-color:var(--accent);background:rgba(0,200,240,.08)}
+.jicon.done{border-color:var(--green);background:rgba(0,217,110,.06)}
+.jbody{flex:1;padding-top:6px}
+.jlabel{font-size:12px;color:var(--dim);font-family:var(--mono);letter-spacing:.04em;margin-bottom:4px}
+.jpacket{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:6px;font-size:12px;font-family:var(--mono);border:1px solid var(--border);background:var(--s2);color:var(--dim);transition:all .3s;max-width:100%;word-break:break-all}
+.jpacket.plain{border-color:rgba(0,217,110,.2);background:rgba(0,217,110,.05);color:var(--green)}
+.jpacket.encrypted{border-color:rgba(245,168,0,.2);background:rgba(245,168,0,.04);color:var(--amber)}
+.jpacket.decrypted{border-color:rgba(0,200,240,.2);background:rgba(0,200,240,.05);color:var(--accent)}
+.jpacket.empty{opacity:.35}
 
-  /* ── Header ── */
-  .header { text-align: center; margin-bottom: 32px; }
-  .header h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: 26px;
-    font-weight: 800;
-    color: var(--text-bright);
-    letter-spacing: -0.5px;
-  }
-  .header h1 span { color: var(--accent); }
-  .header p {
-    font-size: 11px;
-    color: var(--text-dim);
-    margin-top: 6px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
+/* packet slide-in animation */
+@keyframes pktin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.pkt-anim{animation:pktin .35s ease forwards}
 
-  /* ── Step nav ── */
-  .steps-nav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 24px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-  .step-item { display: flex; align-items: center; flex-shrink: 0; }
-  .step-dot {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 0 4px;
-  }
-  .step-num {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-dim);
-    background: var(--surface);
-    transition: background 120ms, border-color 120ms, color 120ms;
-  }
-  .step-label {
-    font-size: 9px;
-    color: var(--text-dim);
-    text-align: center;
-    white-space: nowrap;
-    max-width: 68px;
-    line-height: 1.2;
-    transition: color 120ms;
-  }
-  .step-line {
-    width: 24px;
-    height: 1px;
-    background: var(--border);
-    margin-bottom: 18px;
-    flex-shrink: 0;
-    transition: background 120ms;
-  }
-  .step-item.done .step-num  { background: rgba(0,232,122,0.1); border-color: var(--green); color: var(--green); }
-  .step-item.active .step-num { background: rgba(0,212,255,0.1); border-color: var(--accent); color: var(--accent); }
-  .step-item.done .step-label  { color: var(--green); }
-  .step-item.active .step-label { color: var(--accent); }
-  .step-line.done { background: var(--green); }
+/* devices grid */
+.devices-grid{display:grid;grid-template-columns:1fr 90px 1fr;gap:12px;padding:16px 20px;align-items:start}
+.dcard{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;transition:border-color .3s}
+.dcard.trusted{border-color:rgba(0,217,110,.2)}
+.dcard-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.dname{font-size:14px;font-weight:600;color:var(--bright)}
+.dstatus{font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid;margin-left:auto;font-family:var(--mono);white-space:nowrap}
+.ds-trusted{color:var(--green);border-color:rgba(0,217,110,.25);background:rgba(0,217,110,.06)}
+.ds-pending{color:var(--amber);border-color:rgba(245,168,0,.25);background:rgba(245,168,0,.05)}
+.ds-inactive{color:var(--dim);border-color:var(--border);background:transparent}
+.dmsg{margin-top:8px;padding:7px 10px;border-radius:6px;font-size:12px;line-height:1.5;border:1px solid rgba(0,217,110,.15);background:rgba(0,217,110,.04);color:var(--green)}
+.dmsg-lbl{font-size:10px;opacity:.6;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em}
+.dmsg-none{border-color:var(--border);background:transparent;color:var(--dim);font-style:italic}
+.dkey-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;padding:3px 0}
+.dkey-lbl{color:var(--dim)}
+.dkey-val{font-family:var(--mono);font-size:11px}
+.kyes{color:var(--green)}.kno{color:var(--dim)}.kna{color:var(--dim);font-style:italic}
 
-  /* ── Panel ── */
-  .panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 16px;
-  }
-  .panel-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 13px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-  .step-badge {
-    background: rgba(0,212,255,0.08);
-    border: 1px solid rgba(0,212,255,0.2);
-    color: var(--accent);
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: 700;
-    letter-spacing: 1px;
-  }
-  .panel-header h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-bright);
-  }
+.dcol-mid{display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:4px}
+.svricon{width:44px;height:44px;border-radius:10px;background:var(--s2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px}
+.svrlbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em}
+.svrtags{display:flex;flex-direction:column;gap:3px;align-items:center}
+.svrtag{font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);color:var(--dim);white-space:nowrap;font-family:var(--mono)}
+.svrtag.active{border-color:rgba(0,200,240,.2);color:var(--accent);background:rgba(0,200,240,.04)}
 
-  /* ── Devices row ── */
-  .devices-row {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: start;
-    padding: 20px;
-    gap: 12px;
-  }
+/* details collapse */
+.details-toggle{display:flex;align-items:center;gap:6px;margin:0 20px 16px;cursor:pointer;font-size:12px;color:var(--dim);user-select:none;transition:color .15s}
+.details-toggle:hover{color:var(--text)}
+.details-arrow{font-size:10px;transition:transform .2s;display:inline-block}
+.details-arrow.open{transform:rotate(90deg)}
+.details-body{display:none;margin:0 20px 16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:11px;font-family:var(--mono);color:var(--dim);line-height:1.8}
+.details-body.open{display:block}
 
-  .device-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 120ms;
-  }
-  .device-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--border);
-    transition: background 120ms;
-  }
-  .device-card.trusted { border-color: rgba(0,232,122,0.15); }
-  .device-card.trusted::before { background: var(--green); }
-  .device-card.breach::before { background: var(--red); }
+/* action bar */
+.abar{display:flex;justify-content:center;padding:4px 20px 20px}
+.btn-cont{font-family:var(--sans);font-size:13px;font-weight:600;padding:10px 32px;border-radius:8px;border:1px solid rgba(0,200,240,.28);background:rgba(0,200,240,.08);color:var(--accent);cursor:pointer;letter-spacing:.02em;transition:all .15s}
+.btn-cont:hover:not(:disabled){background:rgba(0,200,240,.15);border-color:rgba(0,200,240,.5)}
+.btn-cont:disabled{opacity:.38;cursor:not-allowed}
+.btn-cont.done{border-color:rgba(0,217,110,.28);background:rgba(0,217,110,.07);color:var(--green);cursor:default}
+.btn-cont.done:hover{background:rgba(0,217,110,.07);border-color:rgba(0,217,110,.28)}
 
-  .device-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-  .device-icon { font-size: 20px; line-height: 1; }
-  .device-name {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text-bright);
-  }
-  .device-status {
-    font-size: 10px;
-    padding: 2px 7px;
-    border-radius: 20px;
-    font-weight: 500;
-    margin-left: auto;
-    border: 1px solid;
-    white-space: nowrap;
-  }
-  .status-trusted   { color: var(--green); border-color: rgba(0,232,122,0.25); background: rgba(0,232,122,0.07); }
-  .status-inactive  { color: var(--text-dim); border-color: var(--border); background: transparent; font-style: italic; }
-  .status-breach    { color: var(--red); border-color: rgba(255,51,102,0.25); background: rgba(255,51,102,0.07); }
+/* breach */
+.breach-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 20px}
+.bcard{border-radius:8px;padding:12px 14px;border:1px solid}
+.bcard.has{border-color:rgba(245,168,0,.2);background:rgba(245,168,0,.03)}
+.bcard.miss{border-color:rgba(0,217,110,.2);background:rgba(0,217,110,.03)}
+.bcard-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:8px}
+.bcard.has .bcard-title{color:var(--amber)}.bcard.miss .bcard-title{color:var(--green)}
+.bitem{font-size:12px;display:flex;gap:7px;margin-bottom:4px;color:var(--text)}
+.breach-result{text-align:center;padding:16px 20px 20px;border-top:1px solid var(--border)}
+.breach-big{font-size:22px;font-weight:700;color:var(--red);font-family:var(--mono);letter-spacing:.06em}
+.breach-sub{font-size:12px;color:var(--dim);margin-top:5px}
 
-  .device-props { display: flex; flex-direction: column; gap: 5px; }
-  .prop-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 11px;
-  }
-  .prop-label { color: var(--text-dim); }
-  .prop-val { font-weight: 700; }
-  .prop-val.yes { color: var(--green); }
-  .prop-val.no  { color: var(--red); }
-  .prop-val.na  { color: var(--text-dim); font-style: italic; }
+/* sidebar logs */
+.sidebar-panel{background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:sticky;top:20px}
+.sidebar-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.sidebar-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);font-weight:700}
+.log-cnt{font-size:11px;color:var(--dim);background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:1px 8px;font-family:var(--mono)}
+.log-adv-toggle{font-size:10px;color:var(--dim);cursor:pointer;font-family:var(--mono);padding:2px 6px;border-radius:4px;border:1px solid var(--border);background:transparent;transition:all .15s}
+.log-adv-toggle:hover{color:var(--text);border-color:var(--dim)}
+.log-adv-toggle.on{color:var(--amber);border-color:rgba(245,168,0,.3)}
+.logs-body{max-height:480px;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:2px}
+.logs-body::-webkit-scrollbar{width:3px}.logs-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.log-grp{margin-bottom:10px}
+.log-grp:last-child{margin-bottom:0}
+.log-grp-hdr{display:flex;align-items:center;gap:6px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:5px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.log-grp-n{width:16px;height:16px;border-radius:50%;background:var(--s2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+.lentry{display:flex;gap:6px;align-items:flex-start;font-size:12px;color:var(--dim);padding:2px 0;opacity:0;transition:opacity .2s}
+.lentry.vis{opacity:1}
+.lentry.lg{color:var(--green)}.lentry.lb{color:var(--accent)}.lentry.lr{color:var(--red)}.lentry.ly{color:var(--amber)}
+.larr{flex-shrink:0;opacity:.35;font-size:10px;margin-top:2px}
+.lentry.adv{display:none}
+.show-adv .lentry.adv{display:flex}
+.log-empty{font-size:12px;color:var(--dim);font-style:italic;padding:8px 0}
 
-  .message-bubble {
-    margin-top: 10px;
-    padding: 7px 10px;
-    border-radius: 6px;
-    font-size: 11px;
-    border: 1px solid;
-    line-height: 1.5;
-    transition: opacity 120ms;
-  }
-  .msg-readable   { background: rgba(0,232,122,0.05); border-color: rgba(0,232,122,0.18); color: var(--green); }
-  .msg-unreadable { background: rgba(255,51,102,0.05); border-color: rgba(255,51,102,0.18); color: var(--red); }
-  .msg-none       { background: transparent; border-color: var(--border); color: var(--text-dim); font-style: italic; }
-  .msg-label {
-    font-size: 9px;
-    color: inherit;
-    opacity: 0.6;
-    margin-bottom: 2px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
+/* completion */
+.completion{text-align:center;padding:24px;background:var(--s1);border:1px solid rgba(0,217,110,.15);border-radius:14px;margin-bottom:18px;opacity:0;transition:opacity .25s}
+.completion.vis{opacity:1}
+.completion h3{font-size:17px;font-weight:700;color:var(--green);margin-bottom:8px}
+.completion p{font-size:13px;color:var(--dim);line-height:1.7}
 
-  /* ── Server column ── */
-  .server-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    padding-top: 6px;
-    min-width: 110px;
-  }
-  .server-icon-wrap {
-    width: 42px;
-    height: 42px;
-    border-radius: 8px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-  }
-  .server-label {
-    font-size: 9px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  .server-stores { display: flex; flex-direction: column; gap: 3px; align-items: center; }
-  .server-tag {
-    font-size: 9px;
-    padding: 2px 6px;
-    border-radius: 3px;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    white-space: nowrap;
-  }
-  .server-tag.active-tag {
-    border-color: rgba(0,212,255,0.2);
-    color: var(--accent);
-    background: rgba(0,212,255,0.05);
-  }
+/* QR */
+.qr-area{display:flex;align-items:center;justify-content:center;gap:16px;padding:8px 20px 12px}
+.qr-box{width:52px;height:52px;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);gap:2px;padding:4px;border:1px solid rgba(0,200,240,.2);border-radius:6px;background:rgba(0,200,240,.02)}
+.qc{border-radius:1px;background:var(--border)}.qc.f{background:rgba(0,200,240,.45)}
+.qr-txt{font-size:11px;color:var(--dim);line-height:1.5}
 
-  /* ── Event indicators (replaces sliding packets) ── */
-  .events-section {
-    margin: 0 20px 4px;
-  }
-  .events-list {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-height: 28px;
-  }
-  .event-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 10px;
-    padding: 3px 9px;
-    border-radius: 4px;
-    border: 1px solid;
-    width: fit-content;
-    opacity: 0;
-    transition: opacity 120ms;
-  }
-  .event-indicator.visible { opacity: 1; }
-  .ev-blue   { color: var(--accent); border-color: rgba(0,212,255,0.2); background: rgba(0,212,255,0.05); }
-  .ev-green  { color: var(--green);  border-color: rgba(0,232,122,0.2); background: rgba(0,232,122,0.05); }
-  .ev-red    { color: var(--red);    border-color: rgba(255,51,102,0.2); background: rgba(255,51,102,0.05); }
-  .ev-yellow { color: var(--yellow); border-color: rgba(255,204,0,0.2);  background: rgba(255,204,0,0.05); }
+/* step-view fade */
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.step-view{animation:fadein .2s ease forwards}
 
-  /* ── QR static illustration ── */
-  .qr-area {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    padding: 8px 20px 4px;
-  }
-  .qr-label { font-size: 10px; color: var(--text-dim); }
-  .qr-box {
-    width: 56px;
-    height: 56px;
-    border: 1px solid rgba(0,212,255,0.25);
-    border-radius: 6px;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-template-rows: repeat(5, 1fr);
-    gap: 2px;
-    padding: 4px;
-    background: rgba(0,212,255,0.03);
-  }
-  .qr-cell { border-radius: 1px; background: var(--border); }
-  .qr-cell.filled { background: rgba(0,212,255,0.5); }
-  .qr-sep { font-size: 14px; color: var(--text-dim); }
-
-  /* ── Logs ── */
-  .logs-section { margin: 10px 20px 16px; }
-  .logs-title {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--text-dim);
-    margin-bottom: 6px;
-  }
-  .logs-box {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    min-height: 72px;
-    max-height: 130px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .log-entry {
-    font-size: 11px;
-    color: var(--text-dim);
-    display: flex;
-    align-items: flex-start;
-    gap: 7px;
-    opacity: 0;
-    transition: opacity 120ms;
-  }
-  .log-entry.visible { opacity: 1; }
-  .log-entry.log-green  { color: var(--green); }
-  .log-entry.log-blue   { color: var(--accent); }
-  .log-entry.log-red    { color: var(--red); }
-  .log-entry.log-yellow { color: var(--yellow); }
-  .log-arrow { flex-shrink: 0; opacity: 0.4; font-size: 10px; }
-
-  /* ── Action button ── */
-  .action-bar { display: flex; justify-content: center; padding: 0 20px 18px; }
-  .btn-main {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 10px 32px;
-    border-radius: 6px;
-    border: 1px solid rgba(0,212,255,0.3);
-    background: rgba(0,212,255,0.08);
-    color: var(--accent);
-    cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: background 100ms, border-color 100ms, color 100ms;
-  }
-  .btn-main:hover:not(:disabled) {
-    background: rgba(0,212,255,0.14);
-    border-color: rgba(0,212,255,0.5);
-  }
-  .btn-main:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-main.btn-done {
-    border-color: rgba(0,232,122,0.3);
-    background: rgba(0,232,122,0.07);
-    color: var(--green);
-    cursor: default;
-  }
-  .btn-main.btn-done:hover { background: rgba(0,232,122,0.07); border-color: rgba(0,232,122,0.3); }
-
-  /* ── Breach ── */
-  .attacker-card {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0 20px 12px;
-    padding: 12px 14px;
-    background: rgba(255,51,102,0.05);
-    border: 1px solid rgba(255,51,102,0.15);
-    border-radius: 8px;
-  }
-  .attacker-icon { font-size: 24px; }
-  .attacker-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--red); margin-bottom: 3px; }
-  .attacker-desc { font-size: 11px; color: var(--text-dim); }
-
-  .breach-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    padding: 0 20px 12px;
-  }
-  .breach-card { border-radius: 8px; padding: 12px; border: 1px solid; }
-  .breach-card.has     { border-color: rgba(255,204,0,0.2);  background: rgba(255,204,0,0.04); }
-  .breach-card.missing { border-color: rgba(0,232,122,0.2); background: rgba(0,232,122,0.04); }
-  .breach-card-title {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 7px;
-    font-weight: 700;
-  }
-  .breach-card.has .breach-card-title     { color: var(--yellow); }
-  .breach-card.missing .breach-card-title { color: var(--green); }
-  .breach-item { font-size: 11px; display: flex; gap: 6px; margin-bottom: 3px; }
-
-  .breach-result {
-    text-align: center;
-    padding: 12px 20px 18px;
-    border-top: 1px solid var(--border);
-    margin-top: 4px;
-  }
-  .breach-unreadable {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--red);
-    letter-spacing: 2px;
-  }
-  .breach-sub { font-size: 11px; color: var(--text-dim); margin-top: 5px; }
-
-  /* ── Completion ── */
-  .completion {
-    text-align: center;
-    padding: 20px;
-    background: var(--surface);
-    border: 1px solid rgba(0,232,122,0.15);
-    border-radius: 10px;
-    margin-top: 16px;
-    opacity: 0;
-    transition: opacity 150ms;
-  }
-  .completion.visible { opacity: 1; }
-  .completion h3 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: var(--green); margin-bottom: 7px; }
-  .completion p  { font-size: 11px; color: var(--text-dim); line-height: 1.7; }
-
-  /* ── Step fade-in ── */
-  .step-view { opacity: 0; transition: opacity 150ms; }
-  .step-view.visible { opacity: 1; }
-
-
-  /* ── Log groups ── */
-  .log-group { margin-bottom: 10px; }
-  .log-group:last-child { margin-bottom: 0; }
-  .log-group-header {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--text-dim);
-    margin-bottom: 5px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid var(--border);
-  }
-  .log-group-num {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    font-size: 9px;
-    font-weight: 700;
-    color: var(--text-dim);
-    flex-shrink: 0;
-  }
-  /* Persistent log panel below the step panel */
-  .logs-panel-outer {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 16px;
-  }
-  .logs-panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-  }
-  .logs-panel-title {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--text-dim);
-    font-weight: 700;
-  }
-  .logs-count {
-    font-size: 10px;
-    color: var(--text-dim);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1px 7px;
-  }
-  .logs-box-outer {
-    padding: 12px 16px;
-    max-height: 220px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+/* attacker card */
+.att-card{display:flex;align-items:center;gap:12px;margin:14px 20px 4px;padding:12px 14px;background:rgba(255,51,102,.04);border:1px solid rgba(255,51,102,.15);border-radius:8px}
+.att-name{font-size:13px;font-weight:600;color:var(--red);margin-bottom:2px}
+.att-desc{font-size:12px;color:var(--dim)}
 </style>
 </head>
 <body>
-<div class="app">
-
-  <div class="header">
-    <h1>End-to-End <span>Encryption</span> Demo</h1>
-    <p>How private keys protect your messages</p>
-  </div>
-
-  <div class="steps-nav" id="stepsNav"></div>
-  <div id="mainView"></div>
-
+<div class="wrap">
+<div class="hdr">
+  <h1>End-to-End <em>Encryption</em> — Interactive Demo</h1>
+  <p>Send real messages and watch them transform as they travel</p>
 </div>
+
+<div class="snav" id="stepsNav"></div>
+<div class="layout">
+  <div id="mainCol"></div>
+  <div id="sideCol"></div>
+</div>
+<div id="completionWrap"></div>
+</div>
+
 <script>
-// ── STATE ──────────────────────────────────────────
-const state = {
-  currentStep: 0,
-  stepsCompleted: [],
-  phone:  { hasPrivateKey: false, hasPublicKey: false, isTrusted: false },
-  laptop: { exists: false, hasPrivateKey: false, hasPublicKey: false, isTrusted: false },
-  server: {
-    phonePublicKey: false, laptopPublicKey: false,
-    encryptedBlobForPhone: false, encryptedBlobForLaptop: false,
-    newBlobPhone: false, newBlobLaptop: false,
-  },
-  messages: { oldMsgPhone: null, oldMsgLaptop: null, newMsgPhone: null, newMsgLaptop: null },
-  logs: [],
-  stepAnimating: false,
+const QRP=[1,0,1,0,1,0,1,0,1,0,1,1,0,0,1,0,0,1,0,1,1,0,1,1,0];
+const STEPS=[
+  {short:'Setup\nPhone',  name:'Setup Phone'},
+  {short:'Old\nMessage',  name:'Old Message'},
+  {short:'Add\nLaptop',   name:'Add Laptop'},
+  {short:'Sync\nMsgs',    name:'Sync Messages'},
+  {short:'New\nMessage',  name:'New Message'},
+  {short:'Breach\nSim',   name:'Simulate Breach'},
+];
+const SNAMES=STEPS.map(s=>s.name);
+
+const st={
+  step:0,
+  done:[],
+  animating:false,
+  showAdv:false,
+  msg:'',
+  recipient:'phone',
+  phone:{ok:false},
+  laptop:{exists:false,ok:false},
+  server:{phonePub:false,laptopPub:false,blobPhone:false,blobLaptop:false,newPhone:false,newLaptop:false},
+  msgs:{oldPhone:null,oldLaptop:null,newPhone:null,newLaptop:null},
+  logs:[],
+  journey:{sender:'',encrypted:'',phoneDecrypted:'',laptopDecrypted:''},
 };
 
-const STEPS = [
-  { short: 'Setup\nPhone'   },
-  { short: 'Old\nMessage'   },
-  { short: 'Setup\nLaptop'  },
-  { short: 'Sync\nMsgs'     },
-  { short: 'New\nMessage'   },
-  { short: 'Breach'         },
-];
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
-// Fixed QR pattern (static)
-const QR_PATTERN = [1,0,1,0,1, 0,1,0,1,0, 1,1,0,0,1, 0,0,1,0,1, 1,0,1,1,0];
+function addLog(msg,color,adv){
+  st.logs.push({msg,color:color||'',adv:!!adv,step:st.step});
+  renderSidebar();
+}
 
-// ── NAV ───────────────────────────────────────────
-function renderNav() {
-  const nav = document.getElementById('stepsNav');
-  nav.innerHTML = '';
-  STEPS.forEach((s, i) => {
-    const done   = state.stepsCompleted.includes(i);
-    const active = state.currentStep === i && !done;
-    const item = document.createElement('div');
-    item.className = 'step-item' + (done ? ' done' : '') + (active ? ' active' : '');
-    item.innerHTML = `
-      <div class="step-dot">
-        <div class="step-num">${done ? '✓' : i + 1}</div>
-        <div class="step-label">${s.short.replace('\n','<br>')}</div>
-      </div>`;
-    if (i < STEPS.length - 1) {
-      const line = document.createElement('div');
-      line.className = 'step-line' + (done ? ' done' : '');
+function renderNav(){
+  const nav=document.getElementById('stepsNav');
+  nav.innerHTML='';
+  STEPS.forEach((s,i)=>{
+    const done=st.done.includes(i),active=st.step===i&&!done;
+    const item=document.createElement('div');
+    item.className='sitem'+(done?' done':'')+(active?' active':'');
+    item.innerHTML=`<div class="sdot"><div class="snum">${done?'✓':i+1}</div><div class="slbl">${s.short.replace('\n','<br>')}</div></div>`;
+    if(i<STEPS.length-1){
+      const line=document.createElement('div');
+      line.className='sline'+(done?' done':'');
       item.appendChild(line);
     }
     nav.appendChild(item);
   });
 }
 
-// ── LOGS ──────────────────────────────────────────
-function addLog(msg, color = '') {
-  const stepIdx = state.currentStep;
-  const isNewStep = !state.logs.some(l => l.step === stepIdx);
-  state.logs.push({ msg, color, step: stepIdx });
-
-  const box = document.getElementById('logsBox');
-  if (!box) return;
-
-  // If this is the first entry for this step, add a group header
-  if (isNewStep) {
-    // Remove the "waiting" placeholder if present
-    const placeholder = box.querySelector('[data-placeholder]');
-    if (placeholder) placeholder.remove();
-
-    const group = document.createElement('div');
-    group.className = 'log-group';
-    group.dataset.step = stepIdx;
-    const header = document.createElement('div');
-    header.className = 'log-group-header';
-    header.innerHTML = `<span class="log-group-num">${stepIdx + 1}</span>${STEP_NAMES[stepIdx]}`;
-    group.appendChild(header);
-    box.appendChild(group);
-  }
-
-  // Append entry to the current step's group
-  let group = box.querySelector(`.log-group[data-step="${stepIdx}"]`);
-  if (!group) {
-    // Fallback: create group
-    group = document.createElement('div');
-    group.className = 'log-group';
-    group.dataset.step = stepIdx;
-    box.appendChild(group);
-  }
-
-  const el = document.createElement('div');
-  el.className = 'log-entry' + (color ? ' log-' + color : '');
-  el.innerHTML = `<span class="log-arrow">›</span>${msg}`;
-  group.appendChild(el);
-  requestAnimationFrame(() => el.classList.add('visible'));
-  box.scrollTop = box.scrollHeight;
-
-  // Update count badge
-  const countEl = document.querySelector('.logs-count');
-  if (countEl) {
-    const n = state.logs.length;
-    countEl.textContent = n + ' event' + (n !== 1 ? 's' : '');
-  }
-}
-function clearLogs() { state.logs = []; }
-
-// ── EVENT INDICATORS ──────────────────────────────
-// Replaces sliding packets: shows a static badge that fades in
-function showEvent(text, color, containerId) {
-  const container = document.getElementById(containerId || 'eventsList');
-  if (!container) return;
-  const el = document.createElement('div');
-  el.className = `event-indicator ev-${color}`;
-  el.innerHTML = `<span>✓</span> ${text}`;
-  container.appendChild(el);
-  requestAnimationFrame(() => el.classList.add('visible'));
+function phoneCard(){
+  const p=st.phone,m=st.msgs;
+  const msgs=[];
+  if(m.oldPhone) msgs.push({lbl:'Old message',txt:m.oldPhone});
+  if(m.newPhone) msgs.push({lbl:'New message',txt:m.newPhone});
+  const msgHTML=msgs.length?msgs.map(m=>`<div class="dmsg"><div class="dmsg-lbl">${m.lbl}</div>${m.txt}</div>`).join('')
+    :`<div class="dmsg dmsg-none">No messages yet</div>`;
+  return `<div class="dcard${p.ok?' trusted':''}">
+    <div class="dcard-top">
+      <span style="font-size:20px">📱</span>
+      <span class="dname">Phone</span>
+      <span class="dstatus ${p.ok?'ds-trusted':'ds-inactive'}">${p.ok?'Trusted':'Not setup'}</span>
+    </div>
+    <div class="dkey-row"><span class="dkey-lbl">Secret key</span><span class="dkey-val ${p.ok?'kyes':'kno'}">${p.ok?'✓ Stored locally':'—'}</span></div>
+    ${msgHTML}
+  </div>`;
 }
 
-// ── CARDS ─────────────────────────────────────────
-function phoneCard() {
-  const p = state.phone;
-  const done = state.stepsCompleted;
-  const m = state.messages;
+function laptopCard(){
+  const l=st.laptop,m=st.msgs;
+  if(!l.exists) return `<div class="dcard">
+    <div class="dcard-top"><span style="font-size:20px">💻</span><span class="dname">Laptop</span><span class="dstatus ds-inactive">Not linked</span></div>
+    <div class="dkey-row"><span class="dkey-lbl">Secret key</span><span class="dkey-val kna">—</span></div>
+    <div class="dmsg dmsg-none">Not added yet</div>
+  </div>`;
+  const msgs=[];
+  if(m.oldLaptop) msgs.push({lbl:'Old message (synced)',txt:m.oldLaptop});
+  if(m.newLaptop) msgs.push({lbl:'New message',txt:m.newLaptop});
+  const msgHTML=msgs.length?msgs.map(m=>`<div class="dmsg"><div class="dmsg-lbl">${m.lbl}</div>${m.txt}</div>`).join('')
+    :`<div class="dmsg dmsg-none">Awaiting sync…</div>`;
+  return `<div class="dcard${l.ok?' trusted':''}">
+    <div class="dcard-top"><span style="font-size:20px">💻</span><span class="dname">Laptop</span>
+      <span class="dstatus ${l.ok?'ds-trusted':'ds-pending'}">${l.ok?'Trusted':'Pending'}</span>
+    </div>
+    <div class="dkey-row"><span class="dkey-lbl">Secret key</span><span class="dkey-val ${l.ok?'kyes':'kno'}">${l.ok?'✓ Stored locally':'—'}</span></div>
+    ${msgHTML}
+  </div>`;
+}
 
-  let msgHTML = '';
-  if (done.includes(1)) {
-    msgHTML += `<div class="message-bubble msg-readable"><div class="msg-label">✓ Can read</div>"${m.oldMsgPhone}"</div>`;
-  }
-  if (done.includes(4) && m.newMsgPhone) {
-    msgHTML += `<div class="message-bubble msg-readable" style="margin-top:6px"><div class="msg-label">✓ Can read (new)</div>"${m.newMsgPhone}"</div>`;
-  }
+function serverCard(){
+  const sv=st.server;
+  const tags=[];
+  if(sv.phonePub) tags.push('Phone public key');
+  if(sv.laptopPub) tags.push('Laptop public key');
+  if(sv.blobPhone) tags.push('Enc. blob (phone)');
+  if(sv.blobLaptop) tags.push('Enc. blob (laptop)');
+  if(sv.newPhone) tags.push('New blob (phone)');
+  if(sv.newLaptop) tags.push('New blob (laptop)');
+  return `<div class="dcol-mid">
+    <div class="svricon">🖥</div>
+    <div class="svrlbl">Server</div>
+    <div class="svrtags">${tags.length?tags.map(t=>`<div class="svrtag active">${t}</div>`).join(''):'<div class="svrtag">Empty</div>'}</div>
+  </div>`;
+}
 
-  const canRead = p.hasPrivateKey && (m.oldMsgPhone !== null || m.newMsgPhone !== null);
-  return `
-    <div class="device-card ${p.isTrusted ? 'trusted' : ''}">
-      <div class="device-header">
-        <div class="device-icon">📱</div>
-        <div class="device-name">Phone</div>
-        <div class="device-status ${p.isTrusted ? 'status-trusted' : 'status-inactive'}">${p.isTrusted ? 'Trusted' : 'Not setup'}</div>
+function devicesRow(){
+  return `<div class="devices-grid">${phoneCard()}${serverCard()}${laptopCard()}</div>`;
+}
+
+function journeySection(){
+  const j=st.journey;
+  const nodes=[
+    {icon:'👤',lbl:'Sender',pkt:j.sender,type:j.sender?'plain':''},
+    {icon:'🔐',lbl:'Encryption',pkt:j.encrypted,type:j.encrypted?'encrypted':''},
+    {icon:'🖥',lbl:'Server',pkt:j.encrypted,type:j.encrypted?'encrypted':''},
+    {icon:'📱',lbl:'Phone decrypts',pkt:j.phoneDecrypted,type:j.phoneDecrypted?'decrypted':''},
+    ...(st.laptop.exists?[{icon:'💻',lbl:'Laptop decrypts',pkt:j.laptopDecrypted,type:j.laptopDecrypted?'decrypted':''}]:[]),
+  ];
+  return `<div class="journey"><div class="journey-track">
+    ${nodes.map((n,i)=>`<div class="jnode">
+      <div class="jicon ${n.pkt?'done':''}">
+        <span style="font-size:18px">${n.icon}</span>
       </div>
-      <div class="device-props">
-        <div class="prop-row">
-          <span class="prop-label">Private key</span>
-          <span class="prop-val ${p.hasPrivateKey ? 'yes' : 'no'}">${p.hasPrivateKey ? '✓' : '✗'}</span>
-        </div>
-        <div class="prop-row">
-          <span class="prop-label">Can read</span>
-          <span class="prop-val ${canRead ? 'yes' : 'no'}">${canRead ? '✓' : '✗'}</span>
-        </div>
+      <div class="jbody">
+        <div class="jlabel">${n.lbl}</div>
+        ${n.pkt
+          ?`<div class="jpacket ${n.type} pkt-anim">${n.type==='encrypted'?'🔒 '+n.pkt:n.type==='decrypted'?'✉ '+n.pkt:'✉ '+n.pkt}</div>`
+          :`<div class="jpacket empty">waiting…</div>`}
       </div>
-      ${msgHTML}
-    </div>`;
+    </div>`).join('')}
+  </div></div>`;
 }
 
-function laptopCard() {
-  const l = state.laptop;
-  const done = state.stepsCompleted;
-  const m = state.messages;
-
-  if (!l.exists) {
-    return `
-      <div class="device-card">
-        <div class="device-header">
-          <div class="device-icon">💻</div>
-          <div class="device-name">Laptop</div>
-          <div class="device-status status-inactive">Not linked</div>
-        </div>
-        <div class="device-props">
-          <div class="prop-row"><span class="prop-label">Private key</span><span class="prop-val na">—</span></div>
-          <div class="prop-row"><span class="prop-label">Can read</span><span class="prop-val na">—</span></div>
-        </div>
-      </div>`;
-  }
-
-  let msgHTML = '';
-  if (done.includes(2) && !done.includes(3)) {
-    msgHTML = `<div class="message-bubble msg-unreadable"><div class="msg-label">✗ Old message</div>Not synced yet</div>`;
-  }
-  if (done.includes(3) && m.oldMsgLaptop) {
-    msgHTML = `<div class="message-bubble msg-readable"><div class="msg-label">✓ Can read (synced)</div>"${m.oldMsgLaptop}"</div>`;
-  }
-  if (done.includes(4) && m.newMsgLaptop) {
-    msgHTML += `<div class="message-bubble msg-readable" style="margin-top:6px"><div class="msg-label">✓ Can read (new)</div>"${m.newMsgLaptop}"</div>`;
-  }
-
-  return `
-    <div class="device-card ${l.isTrusted ? 'trusted' : ''}">
-      <div class="device-header">
-        <div class="device-icon">💻</div>
-        <div class="device-name">Laptop</div>
-        <div class="device-status ${l.isTrusted ? 'status-trusted' : 'status-inactive'}">${l.isTrusted ? 'Trusted' : 'Pending'}</div>
+function composerSection(opts={}){
+  const {disabled=false,recipientDisabled=false}=opts;
+  const hasLaptop=st.laptop.exists&&st.laptop.ok;
+  return `<div class="composer">
+    <p class="comp-desc">${opts.desc||'Type a message to send. Watch it encrypt as it travels through the network.'}</p>
+    <div class="comp-field">
+      <div class="comp-label">Message</div>
+      <input class="comp-input" id="msgInput" type="text" placeholder="Type your message…" value="${escHtml(st.msg)}" ${disabled?'disabled':''} oninput="st.msg=this.value">
+    </div>
+    <div class="comp-row">
+      <div>
+        <div class="comp-label">Recipient</div>
+        <select class="comp-select" id="recipientSel" ${!hasLaptop||recipientDisabled?'disabled':''} onchange="st.recipient=this.value">
+          <option value="phone" ${st.recipient==='phone'?'selected':''}>Phone only</option>
+          ${hasLaptop?`<option value="both" ${st.recipient==='both'?'selected':''}>Phone + Laptop</option>`:''}
+        </select>
       </div>
-      <div class="device-props">
-        <div class="prop-row">
-          <span class="prop-label">Private key</span>
-          <span class="prop-val ${l.hasPrivateKey ? 'yes' : 'no'}">${l.hasPrivateKey ? '✓' : '✗'}</span>
-        </div>
-        <div class="prop-row">
-          <span class="prop-label">Can read (old)</span>
-          <span class="prop-val ${done.includes(3) ? 'yes' : 'no'}">${done.includes(3) ? '✓' : '✗'}</span>
-        </div>
-      </div>
-      ${msgHTML}
-    </div>`;
-}
-
-function serverCard() {
-  const sv = state.server;
-  const tags = [];
-  if (sv.phonePublicKey)        tags.push('Phone PubKey');
-  if (sv.laptopPublicKey)       tags.push('Laptop PubKey');
-  if (sv.encryptedBlobForPhone) tags.push('Enc blob (Phone)');
-  if (sv.encryptedBlobForLaptop)tags.push('Enc blob (Laptop)');
-  if (sv.newBlobPhone)          tags.push('New blob (Phone)');
-  if (sv.newBlobLaptop)         tags.push('New blob (Laptop)');
-  const empty = tags.length === 0;
-  return `
-    <div class="server-col">
-      <div class="server-icon-wrap">🖥️</div>
-      <div class="server-label">Server</div>
-      <div class="server-stores">
-        ${empty
-          ? `<div class="server-tag">Empty</div>`
-          : tags.map(t => `<div class="server-tag active-tag">${t}</div>`).join('')}
-      </div>
-    </div>`;
-}
-
-const STEP_NAMES = ['Setup Phone','Send Old Message','Setup Laptop','Sync Old Messages','Send New Message','Simulate Breach'];
-
-function logsBox() {
-  const seen = [];
-  const groups = {};
-  state.logs.forEach(l => {
-    if (!groups[l.step]) { groups[l.step] = []; seen.push(l.step); }
-    groups[l.step].push(l);
-  });
-
-  const groupsHTML = seen.map(stepIdx => {
-    const entries = groups[stepIdx].map(l => {
-      const cls = l.color ? ' log-' + l.color : '';
-      return `<div class="log-entry visible${cls}"><span class="log-arrow">›</span>${l.msg}</div>`;
-    }).join('');
-    return `<div class="log-group"><div class="log-group-header"><span class="log-group-num">${Number(stepIdx)+1}</span>${STEP_NAMES[stepIdx]}</div>${entries}</div>`;
-  }).join('');
-
-  return `
-    <div class="logs-section">
-      <div class="logs-title">System Log</div>
-      <div class="logs-box" id="logsBox">
-        ${groupsHTML || '<div class="log-entry visible" data-placeholder style="color:var(--text-dim)"><span class="log-arrow">›</span>Waiting for first action…</div>'}
-      </div>
-    </div>`;
-}
-
-function eventsArea() {
-  return `<div class="events-section"><div class="events-list" id="eventsList"></div></div>`;
-}
-
-function devicesRow() {
-  return `<div class="devices-row">${phoneCard()}${serverCard()}${laptopCard()}</div>`;
-}
-
-function reRenderDevices() {
-  document.querySelectorAll('.devices-row').forEach(row => {
-    row.innerHTML = `${phoneCard()}${serverCard()}${laptopCard()}`;
-  });
-}
-
-// ── QR static ─────────────────────────────────────
-function qrIllustration(show) {
-  if (!show) return '';
-  return `
-    <div class="qr-area">
-      <div class="qr-label">Laptop QR payload</div>
-      <div class="qr-box">
-        ${QR_PATTERN.map(v => `<div class="qr-cell ${v ? 'filled' : ''}"></div>`).join('')}
-      </div>
-      <div class="qr-sep">→</div>
-      <div class="qr-label">Phone scans &amp; approves</div>
-    </div>`;
-}
-
-// ── STEP RENDERS ──────────────────────────────────
-function renderStep(n, title, content) {
-  return `
-    <div class="panel step-view" id="stepPanel">
-      <div class="panel-header">
-        <span class="step-badge">STEP ${n}</span>
-        <h2>${title}</h2>
-      </div>
-      ${content}
-    </div>`;
-}
-
-function renderStep0() {
-  const done = state.stepsCompleted.includes(0);
-  return renderStep(1, 'Setup Phone', `
-    ${devicesRow()}
-    ${eventsArea()}
-    <div class="action-bar">
-      <button class="btn-main ${done?'btn-done':''}" id="actionBtn" ${done?'disabled':''} onclick="executeStep0()">
-        ${done ? '✓ Phone Setup Complete' : 'Setup Phone'}
-      </button>
-    </div>`);
-}
-
-function renderStep1() {
-  const done = state.stepsCompleted.includes(1);
-  return renderStep(2, 'Send Old Message', `
-    ${devicesRow()}
-    ${eventsArea()}
-    <div class="action-bar">
-      <button class="btn-main ${done?'btn-done':''}" id="actionBtn" ${done?'disabled':''} onclick="executeStep1()">
-        ${done ? '✓ Message Sent' : 'Send Old Message'}
-      </button>
-    </div>`);
-}
-
-function renderStep2() {
-  const done = state.stepsCompleted.includes(2);
-  return renderStep(3, 'Setup Laptop', `
-    ${devicesRow()}
-    ${qrIllustration(!done)}
-    ${eventsArea()}
-    <div class="action-bar">
-      <button class="btn-main ${done?'btn-done':''}" id="actionBtn" ${done?'disabled':''} onclick="executeStep2()">
-        ${done ? '✓ Laptop Setup Complete' : 'Setup Laptop'}
-      </button>
-    </div>`);
-}
-
-function renderStep3() {
-  const done = state.stepsCompleted.includes(3);
-  return renderStep(4, 'Sync Old Messages', `
-    ${devicesRow()}
-    ${eventsArea()}
-    <div class="action-bar">
-      <button class="btn-main ${done?'btn-done':''}" id="actionBtn" ${done?'disabled':''} onclick="executeStep3()">
-        ${done ? '✓ Messages Synced' : 'Sync Old Messages'}
-      </button>
-    </div>`);
-}
-
-function renderStep4() {
-  const done = state.stepsCompleted.includes(4);
-  return renderStep(5, 'Send New Message', `
-    ${devicesRow()}
-    ${eventsArea()}
-    <div class="action-bar">
-      <button class="btn-main ${done?'btn-done':''}" id="actionBtn" ${done?'disabled':''} onclick="executeStep4()">
-        ${done ? '✓ New Message Delivered' : 'Send New Message'}
-      </button>
-    </div>`);
-}
-
-function renderStep5() {
-  const done = state.stepsCompleted.includes(5);
-  return renderStep(6, 'Simulate Breach', `
-    <div class="attacker-card">
-      <div class="attacker-icon">🕵️</div>
-      <div class="attacker-info">
-        <div class="attacker-name">Attacker</div>
-        <div class="attacker-desc">Intercepted server traffic. Has all public data.</div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="btn-send" ${disabled?'disabled':''} onclick="sendMsg()">Send Message →</button>
       </div>
     </div>
-    <div class="breach-grid">
-      <div class="breach-card has">
-        <div class="breach-card-title">⚠ Attacker Has</div>
-        <div class="breach-item"><span style="color:var(--yellow)">✓</span> Phone public key</div>
-        <div class="breach-item"><span style="color:var(--yellow)">✓</span> Laptop public key</div>
-        <div class="breach-item"><span style="color:var(--yellow)">✓</span> Encrypted blob (old msg)</div>
-        <div class="breach-item"><span style="color:var(--yellow)">✓</span> Encrypted blob (new msg)</div>
-      </div>
-      <div class="breach-card missing">
-        <div class="breach-card-title">✓ Missing</div>
-        <div class="breach-item"><span style="color:var(--red)">✗</span> Phone private key</div>
-        <div class="breach-item"><span style="color:var(--red)">✗</span> Laptop private key</div>
-      </div>
-    </div>
-    ${eventsArea()}
-    ${done ? `<div class="breach-result">
-      <div class="breach-unreadable">⊘ UNREADABLE ⊘</div>
-      <div class="breach-sub">Without private keys, all encrypted data is cryptographic noise</div>
-    </div>` : ''}
-    <div class="action-bar">
-      <button class="btn-main ${done?'btn-done':''}" id="actionBtn" ${done?'disabled':''} onclick="executeStep5()">
-        ${done ? '✓ Breach Simulated' : 'Simulate Breach'}
-      </button>
-    </div>`);
+  </div>`;
 }
 
-// ── EXECUTE STEPS ─────────────────────────────────
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function detailsSection(lines){
+  return `<div class="details-toggle" onclick="toggleDetails(this)">
+    <span class="details-arrow">▶</span> Technical details
+  </div>
+  <div class="details-body">
+    ${lines.map(l=>`<div>${l}</div>`).join('')}
+  </div>`;
+}
 
-async function executeStep0() {
-  if (state.stepAnimating) return;
-  state.stepAnimating = true;
-  document.getElementById('actionBtn').disabled = true;
+function toggleDetails(el){
+  const arrow=el.querySelector('.details-arrow');
+  const body=el.nextElementSibling;
+  const open=body.classList.toggle('open');
+  arrow.classList.toggle('open',open);
+}
 
-  state.phone.hasPrivateKey = true;
-  state.phone.hasPublicKey  = true;
-  reRenderDevices();
-  addLog('Phone generated private key locally', 'green');
-  addLog('Phone generated public key locally', 'green');
-  showEvent('Key pair generated', 'green');
-  await sleep(250);
+function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
-  state.server.phonePublicKey = true;
-  reRenderDevices();
-  addLog('Phone uploaded public key to server', 'blue');
-  showEvent('Public key uploaded to server ✓', 'blue');
-  await sleep(200);
+function truncate(s,n=18){return s&&s.length>n?s.substring(0,n)+'…':s||''}
 
-  state.phone.isTrusted = true;
-  reRenderDevices();
-  addLog('Server stored phone public key', 'blue');
+function fakeEnc(msg){
+  const chars='ABCDEF0123456789';
+  let r='';for(let i=0;i<18;i++)r+=chars[Math.floor(Math.random()*chars.length)];
+  return r;
+}
 
+async function sendMsg(){
+  if(!st.msg.trim()){
+    const el=document.getElementById('msgInput');
+    if(el){el.style.borderColor='var(--red)';setTimeout(()=>{el.style.borderColor='';},800)}
+    return;
+  }
+  const txt=st.msg.trim();
+  const toPhone=true;
+  const toLaptop=st.laptop.ok&&st.recipient==='both';
+
+  st.journey={sender:truncate(txt,20),encrypted:'',phoneDecrypted:'',laptopDecrypted:''};
+  renderMain();
+  addLog(`Alice sends "${txt}"${toLaptop?' to Phone + Laptop':' to Phone only'}`,'lb');
+  await sleep(400);
+
+  const enc=fakeEnc(txt);
+  st.journey.encrypted=enc.substring(0,14)+'…';
+  renderMain();
+  addLog(`Message encrypted into unreadable cipher`,'ly',true);
+  addLog(`Cipher arrives at server — server cannot read it`,'lb');
+  await sleep(500);
+
+  st.server.blobPhone=true;
+  if(toLaptop) st.server.blobLaptop=true;
+
+  await sleep(400);
+  st.journey.phoneDecrypted=truncate(txt,20);
+  st.msgs.oldPhone=txt;
+  if(toLaptop){st.journey.laptopDecrypted=truncate(txt,20);st.msgs.oldLaptop=txt;}
+  renderMain();
+  addLog(`Phone unlocks message with its secret key: "${txt}"`,'lg');
+  if(toLaptop) addLog(`Laptop unlocks message with its secret key: "${txt}"`,'lg');
+}
+
+// step renders
+function renderStep0(){
+  const done=st.done.includes(0);
+  return `<div class="step-view">
+    <div class="panel">
+      <div class="phdr"><span class="pbadge">STEP 1</span><h2>Meet the phone — your primary device</h2></div>
+      ${devicesRow()}
+      ${detailsSection(['Every device generates a unique key pair: one public, one private.','The private key is created locally and never transmitted.','The public key is shared with the server — it\'s safe to share.','RSA-OAEP 2048-bit + AES-256-GCM hybrid encryption.'])}
+      <div class="abar"><button class="btn-cont ${done?'done':''}" ${done?'disabled':''} onclick="execStep0()">${done?'✓ Phone ready':'Continue →'}</button></div>
+    </div>
+  </div>`;
+}
+
+function renderStep1(){
+  const done=st.done.includes(1);
+  return `<div class="step-view">
+    <div class="panel">
+      <div class="phdr"><span class="pbadge">STEP 2</span><h2>Send your first message</h2></div>
+      <p style="font-size:13px;color:var(--dim);padding:14px 20px 4px">Only the Phone exists right now. Send a message — you'll see it encrypt, travel through the server, and decrypt on the phone.</p>
+      ${composerSection({recipientDisabled:true})}
+      ${journeySection()}
+      ${devicesRow()}
+      ${detailsSection(['A fresh AES-256 key is generated per message.','That AES key is then RSA-encrypted with the phone\'s public key.','The server stores only the encrypted blob — never the plaintext.'])}
+      <div class="abar"><button class="btn-cont ${done?'done':''}" ${done?'disabled':''} onclick="execStep1()">${done?'✓ Message sent':'Continue →'}</button></div>
+    </div>
+  </div>`;
+}
+
+function renderStep2(){
+  const done=st.done.includes(2);
+  return `<div class="step-view">
+    <div class="panel">
+      <div class="phdr"><span class="pbadge">STEP 3</span><h2>Add the laptop — a second device</h2></div>
+      <p style="font-size:13px;color:var(--dim);padding:14px 20px 4px">The laptop generates its own key pair and shows a QR code. The phone scans and approves it. Old messages don't automatically appear — that's the sync problem.</p>
+      ${devicesRow()}
+      <div class="qr-area">
+        <div class="qr-txt">Laptop's QR payload<br><span style="color:var(--accent);font-family:var(--mono);font-size:10px">{ public_key, device_id }</span></div>
+        <div class="qr-box">${QRP.map(v=>`<div class="qc ${v?'f':''}"></div>`).join('')}</div>
+        <div class="qr-txt" style="color:var(--green)">← Phone scans<br>& approves</div>
+      </div>
+      ${detailsSection(['Laptop generates RSA key pair locally — same process as Phone.','QR payload contains the laptop\'s public key only (safe to transmit).','Phone approval tells the server to trust future messages from Laptop.','Old messages on the server were NOT encrypted for Laptop\'s key.'])}
+      <div class="abar"><button class="btn-cont ${done?'done':''}" ${done?'disabled':''} onclick="execStep2()">${done?'✓ Laptop linked':'Continue →'}</button></div>
+    </div>
+  </div>`;
+}
+
+function renderStep3(){
+  const done=st.done.includes(3);
+  return `<div class="step-view">
+    <div class="panel">
+      <div class="phdr"><span class="pbadge">STEP 4</span><h2>Sync old messages to the laptop</h2></div>
+      <p style="font-size:13px;color:var(--dim);padding:14px 20px 4px">The phone fetches its own encrypted copy of old messages, decrypts them locally, then re-encrypts each one using the laptop's public key. The server only ever sees ciphertext.</p>
+      ${journeySection()}
+      ${devicesRow()}
+      ${detailsSection(['Phone fetches its encrypted blob from the server.','Phone decrypts it locally (private key never leaves the device).','Phone re-encrypts the recovered plaintext for Laptop\'s public key.','New ciphertext is sent to server — still no plaintext stored.','Laptop decrypts its copy using its own private key.'])}
+      <div class="abar"><button class="btn-cont ${done?'done':''}" ${done?'disabled':''} onclick="execStep3()">${done?'✓ Messages synced':'Continue →'}</button></div>
+    </div>
+  </div>`;
+}
+
+function renderStep4(){
+  const done=st.done.includes(4);
+  return `<div class="step-view">
+    <div class="panel">
+      <div class="phdr"><span class="pbadge">STEP 5</span><h2>Send a new message to both devices</h2></div>
+      <p style="font-size:13px;color:var(--dim);padding:14px 20px 4px">Now both devices are trusted. The sender encrypts the message twice — once for each device — using their respective public keys.</p>
+      ${composerSection({desc:'Send a message to both devices. Each gets its own encrypted copy.'})}
+      ${journeySection()}
+      ${devicesRow()}
+      ${detailsSection(['Message is encrypted separately for Phone and Laptop.','Each encryption uses a fresh AES key, wrapped with that device\'s RSA public key.','Even though the plaintext is identical, the two ciphertexts are completely different.','The server cannot link the two blobs to the same original message.'])}
+      <div class="abar"><button class="btn-cont ${done?'done':''}" ${done?'disabled':''} onclick="execStep4()">${done?'✓ New message delivered':'Continue →'}</button></div>
+    </div>
+  </div>`;
+}
+
+function renderStep5(){
+  const done=st.done.includes(5);
+  return `<div class="step-view">
+    <div class="panel">
+      <div class="phdr"><span class="pbadge">STEP 6</span><h2>What if the server is hacked?</h2></div>
+      <div class="att-card"><span style="font-size:24px">🕵️</span>
+        <div><div class="att-name">Attacker</div><div class="att-desc">Breached the server. Downloaded everything. Has all public data and encrypted blobs.</div></div>
+      </div>
+      <div class="breach-grid">
+        <div class="bcard has">
+          <div class="bcard-title">⚠ Attacker has</div>
+          <div class="bitem"><span style="color:var(--amber)">•</span> Phone public key</div>
+          <div class="bitem"><span style="color:var(--amber)">•</span> Laptop public key</div>
+          <div class="bitem"><span style="color:var(--amber)">•</span> All encrypted message blobs</div>
+        </div>
+        <div class="bcard miss">
+          <div class="bcard-title">✗ Cannot get</div>
+          <div class="bitem"><span style="color:var(--red)">•</span> Phone private key</div>
+          <div class="bitem"><span style="color:var(--red)">•</span> Laptop private key</div>
+          <div class="bitem"><span style="color:var(--dim)">Private keys never left the devices</span></div>
+        </div>
+      </div>
+      ${done?`<div class="breach-result"><div class="breach-big">🔒 UNREADABLE</div><div class="breach-sub">Without the private keys, every encrypted blob is indistinguishable from random noise</div></div>`:''}
+      ${detailsSection(['RSA-OAEP ciphertext is computationally infeasible to break without the private key.','Even the server operator cannot read messages (true E2E).','Public keys are useless for decryption — they only encrypt.','AES-GCM also provides authentication — tampered ciphertext is detected.'])}
+      <div class="abar"><button class="btn-cont ${done?'done':''}" ${done?'disabled':''} onclick="execStep5()">${done?'✓ Breach simulated':'Simulate Breach →'}</button></div>
+    </div>
+  </div>`;
+}
+
+// step executions
+async function execStep0(){
+  if(st.animating)return;st.animating=true;
+  st.phone={ok:true};
+  st.server.phonePub=true;
+  addLog('Phone generated a secret private key — stored only on the device','lg');
+  addLog('Phone generated a public key and uploaded it to the server','lb');
+  addLog('Server stored phone\'s public key','lb',true);
   completeStep(0);
 }
 
-async function executeStep1() {
-  if (state.stepAnimating) return;
-  state.stepAnimating = true;
-  document.getElementById('actionBtn').disabled = true;
-
-  addLog('Alice encrypted "Hello Kevin" for Phone only', 'blue');
-  showEvent('Message encrypted for Phone ✓', 'yellow');
-  state.server.encryptedBlobForPhone = true;
-  reRenderDevices();
-  await sleep(250);
-
-  addLog('Server stored unreadable encrypted blob', 'yellow');
-  showEvent('Encrypted blob stored on server ✓', 'blue');
-  await sleep(250);
-
-  state.messages.oldMsgPhone = 'Hello Kevin';
-  reRenderDevices();
-  addLog('Phone decrypted message with private key', 'green');
-  showEvent('Phone decrypted message ✓', 'green');
-
+async function execStep1(){
+  if(st.animating)return;
+  if(!st.msgs.oldPhone){addLog('Send a message first using the composer above','lr');st.animating=false;return;}
+  st.animating=true;
   completeStep(1);
 }
 
-async function executeStep2() {
-  if (state.stepAnimating) return;
-  state.stepAnimating = true;
-  document.getElementById('actionBtn').disabled = true;
-
-  state.laptop.exists = true;
-  state.laptop.hasPrivateKey = true;
-  state.laptop.hasPublicKey  = true;
-  reRenderDevices();
-  addLog('Laptop generated private + public key pair locally', 'green');
-  addLog('Laptop generated QR payload: { device_id, public_key }', 'blue');
-  showEvent('QR payload generated ✓', 'blue');
-  await sleep(250);
-
-  addLog('Phone scanned QR', 'blue');
-  addLog('Phone approved Laptop identity', 'green');
-  showEvent('Phone approved Laptop ✓', 'green');
-  await sleep(250);
-
-  state.server.laptopPublicKey = true;
-  state.laptop.isTrusted = true;
-  reRenderDevices();
-  addLog('Server stored Laptop public key', 'blue');
-  showEvent('Laptop public key stored on server ✓', 'blue');
-
+async function execStep2(){
+  if(st.animating)return;st.animating=true;
+  st.laptop={exists:true,ok:true};
+  st.server.laptopPub=true;
+  addLog('Laptop generated its own private key locally','lg');
+  addLog('Laptop displayed QR code with its public key','lb',true);
+  addLog('Phone scanned QR and approved the laptop identity','lg');
+  addLog('Server now trusts Laptop — stored its public key','lb');
   completeStep(2);
 }
 
-async function executeStep3() {
-  if (state.stepAnimating) return;
-  state.stepAnimating = true;
-  document.getElementById('actionBtn').disabled = true;
+async function execStep3(){
+  if(st.animating)return;st.animating=true;
+  const txt=st.msgs.oldPhone;
+  if(!txt){addLog('No old message to sync','lr');st.animating=false;return;}
 
-  addLog('Phone fetched encrypted old message from server', 'blue');
-  showEvent('Old blob fetched from server ✓', 'blue');
-  await sleep(250);
+  st.journey={sender:truncate(txt,20),encrypted:'',phoneDecrypted:'',laptopDecrypted:''};
+  renderMain();
+  addLog('Phone fetched its encrypted copy of old messages from server','lb');
+  await sleep(400);
 
-  addLog('Phone decrypted old message locally', 'green');
-  showEvent('Phone decrypted old message ✓', 'green');
-  await sleep(200);
+  addLog('Phone unlocked old messages with its secret key','lg');
+  const enc=fakeEnc(txt);
+  st.journey.encrypted=enc.substring(0,14)+'…';
+  renderMain();
+  await sleep(350);
 
-  state.server.encryptedBlobForLaptop = true;
-  reRenderDevices();
-  addLog('Phone re-encrypted "Hello Kevin" for Laptop', 'blue');
-  addLog('Server stored new encrypted blob for Laptop', 'yellow');
-  showEvent('Re-encrypted blob stored for Laptop ✓', 'yellow');
-  await sleep(250);
+  addLog('Phone re-encrypted each message using Laptop\'s public key','lb',true);
+  addLog('New encrypted blob sent to server — server never sees plaintext','ly');
+  st.server.blobLaptop=true;
+  await sleep(350);
 
-  state.messages.oldMsgLaptop = 'Hello Kevin';
-  reRenderDevices();
-  addLog('Laptop decrypted synced message with private key', 'green');
-  showEvent('Laptop decrypted synced message ✓', 'green');
-
+  st.msgs.oldLaptop=txt;
+  st.journey.laptopDecrypted=truncate(txt,20);
+  renderMain();
+  addLog(`Laptop unlocked synced message: "${txt}"`,'lg');
   completeStep(3);
 }
 
-async function executeStep4() {
-  if (state.stepAnimating) return;
-  state.stepAnimating = true;
-  document.getElementById('actionBtn').disabled = true;
-
-  state.server.newBlobPhone  = true;
-  state.server.newBlobLaptop = true;
-  reRenderDevices();
-  addLog('Alice encrypted "Hey Kevin" separately for Phone', 'blue');
-  addLog('Alice encrypted "Hey Kevin" separately for Laptop', 'blue');
-  showEvent('Encrypted separately for each device ✓', 'yellow');
-  await sleep(250);
-
-  state.messages.newMsgPhone = 'Hey Kevin';
-  reRenderDevices();
-  addLog('Phone decrypted new message', 'green');
-  showEvent('Phone decrypted new message ✓', 'green');
-  await sleep(200);
-
-  state.messages.newMsgLaptop = 'Hey Kevin';
-  reRenderDevices();
-  addLog('Laptop decrypted new message', 'green');
-  showEvent('Laptop decrypted new message ✓', 'green');
-
+async function execStep4(){
+  if(st.animating)return;
+  if(!st.msgs.newPhone&&!st.msgs.oldPhone){addLog('Send a message first','lr');return;}
+  st.animating=true;
   completeStep(4);
 }
 
-async function executeStep5() {
-  if (state.stepAnimating) return;
-  state.stepAnimating = true;
-  document.getElementById('actionBtn').disabled = true;
-
-  addLog('Attacker downloaded all server data', 'red');
-  showEvent('Server data downloaded by attacker', 'red');
-  await sleep(250);
-
-  addLog('Attacker has: public keys, encrypted blobs', 'red');
-  await sleep(200);
-
-  addLog('Attacker missing: private keys — never left devices', 'green');
-  showEvent('Private keys: not on server — unavailable', 'green');
-  await sleep(250);
-
-  addLog('Attacker attempts decryption...', 'yellow');
+async function execStep5(){
+  if(st.animating)return;st.animating=true;
+  addLog('Attacker breached the server and downloaded all data','lr');
   await sleep(300);
-  addLog('RESULT: Ciphertext is unreadable noise', 'red');
-  showEvent('Decryption attempt failed — UNREADABLE', 'red');
-
+  addLog('Attacker has: public keys + encrypted blobs','lr');
+  addLog('Attacker missing: private keys — they never left the devices','lg');
+  await sleep(300);
+  addLog('Attacker attempts to decrypt blobs… fails','lr');
+  addLog('Result: every message is cryptographic noise without the private key','lg');
   completeStep(5);
 }
 
-// ── COMPLETE & RENDER ─────────────────────────────
-function completeStep(idx) {
-  if (!state.stepsCompleted.includes(idx)) state.stepsCompleted.push(idx);
-  state.stepAnimating = false;
-  if (idx < 5) {
-    state.currentStep = idx + 1;
-  }
-  renderNav();
-  renderMain();
+function completeStep(idx){
+  if(!st.done.includes(idx)) st.done.push(idx);
+  st.animating=false;
+  if(idx<5) st.step=idx+1;
+  renderAll();
 }
 
-function buildLogPanel() {
-  const seen = [];
-  const groups = {};
-  state.logs.forEach(l => {
-    if (!groups[l.step]) { groups[l.step] = []; seen.push(l.step); }
+function renderSidebar(){
+  const seen=[],groups={};
+  st.logs.forEach(l=>{
+    if(!groups[l.step]){groups[l.step]=[];seen.push(l.step);}
     groups[l.step].push(l);
   });
-
-  const groupsHTML = seen.map(stepIdx => {
-    const entries = groups[stepIdx].map(l => {
-      const cls = l.color ? ' log-' + l.color : '';
-      return `<div class="log-entry visible${cls}"><span class="log-arrow">›</span>${l.msg}</div>`;
-    }).join('');
-    return `<div class="log-group"><div class="log-group-header"><span class="log-group-num">${Number(stepIdx)+1}</span>${STEP_NAMES[stepIdx]}</div>${entries}</div>`;
+  const total=st.logs.length;
+  const ghtml=seen.map(si=>{
+    const entries=groups[si].map(l=>`<div class="lentry ${l.color?'l'+l.color:''} ${l.adv?'adv':''} vis"><span class="larr">›</span>${l.msg}</div>`).join('');
+    return `<div class="log-grp"><div class="log-grp-hdr"><span class="log-grp-n">${Number(si)+1}</span>${SNAMES[si]}</div>${entries}</div>`;
   }).join('');
-
-  const total = state.logs.length;
-  return `
-    <div class="logs-panel-outer">
-      <div class="logs-panel-header">
-        <span class="logs-panel-title">System Log</span>
-        <span class="logs-count">${total} event${total !== 1 ? 's' : ''}</span>
+  document.getElementById('sideCol').innerHTML=`
+    <div class="sidebar-panel${st.showAdv?' show-adv':''}">
+      <div class="sidebar-hdr">
+        <span class="sidebar-title">Activity Log</span>
+        <span class="log-cnt">${total}</span>
       </div>
-      <div class="logs-box-outer" id="logsBox">
-        ${groupsHTML || '<div class="log-entry visible" data-placeholder style="color:var(--text-dim)"><span class="log-arrow">›</span>Waiting for first action…</div>'}
+      <div style="padding:8px 14px 0;display:flex;justify-content:flex-end">
+        <button class="log-adv-toggle ${st.showAdv?'on':''}" onclick="toggleAdv()">${st.showAdv?'Hide advanced':'Show advanced'}</button>
+      </div>
+      <div class="logs-body">
+        ${ghtml||'<div class="log-empty">Waiting for first action…</div>'}
       </div>
     </div>`;
+  const box=document.querySelector('.logs-body');
+  if(box) box.scrollTop=box.scrollHeight;
 }
 
-function renderMain() {
-  const view = document.getElementById('mainView');
-  const s = state.currentStep;
+function toggleAdv(){
+  st.showAdv=!st.showAdv;
+  renderSidebar();
+}
 
-  const renderers = [renderStep0, renderStep1, renderStep2, renderStep3, renderStep4, renderStep5];
-  let html = renderers[s]();
+const renders=[renderStep0,renderStep1,renderStep2,renderStep3,renderStep4,renderStep5];
 
-  // Persistent log panel always rendered below the step panel
-  html += buildLogPanel();
+function renderMain(){
+  document.getElementById('mainCol').innerHTML=renders[st.step]();
+}
 
-  if (state.stepsCompleted.includes(5)) {
-    html += `<div class="completion" id="completionCard">
-      <h3>✓ Demo Complete</h3>
-      <p>You've seen the full E2E encryption lifecycle.<br>
-      Public keys live on the server. Private keys never leave the device.<br>
-      <strong style="color:var(--green)">Without private keys, encrypted data is meaningless to an attacker.</strong></p>
-    </div>`;
-  }
-
-  view.innerHTML = html;
-
-  // Fade in the panel and completion card
-  requestAnimationFrame(() => {
-    const panel = document.getElementById('stepPanel');
-    if (panel) panel.classList.add('visible');
-    const card = document.getElementById('completionCard');
-    if (card) requestAnimationFrame(() => card.classList.add('visible'));
-  });
-
+function renderAll(){
   renderNav();
+  renderMain();
+  renderSidebar();
+  const cw=document.getElementById('completionWrap');
+  if(st.done.includes(5)){
+    cw.innerHTML=`<div class="completion vis"><h3>✓ Demo complete</h3><p>You've seen the full lifecycle of end-to-end encrypted messages.<br>Public keys live on the server. Private keys stay on each device.<br><strong style="color:var(--green)">Without private keys, every encrypted blob is unreadable — even to the server operator.</strong></p></div>`;
+  }
 }
 
-// ── BOOT ──────────────────────────────────────────
-renderNav();
-renderMain();
+renderAll();
 </script>
 </body>
 </html>
